@@ -1,9 +1,6 @@
 package org.fffd.l23o6.service.impl;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.fffd.l23o6.dao.RouteDao;
@@ -12,6 +9,7 @@ import org.fffd.l23o6.mapper.TrainMapper;
 import org.fffd.l23o6.pojo.entity.RouteEntity;
 import org.fffd.l23o6.pojo.entity.TrainEntity;
 import org.fffd.l23o6.pojo.enum_.TrainType;
+import org.fffd.l23o6.pojo.vo.route.RouteVO;
 import org.fffd.l23o6.pojo.vo.train.AdminTrainVO;
 import org.fffd.l23o6.pojo.vo.train.TrainVO;
 import org.fffd.l23o6.pojo.vo.train.TicketInfo;
@@ -44,9 +42,27 @@ public class TrainServiceImpl implements TrainService {
     @Override
     public List<TrainVO> listTrains(Long startStationId, Long endStationId, String date) {
         // TODO
+        // 6/30
         // First, get all routes contains [startCity, endCity]
         // Then, Get all trains on that day with the wanted routes
-        return null;
+        List<TrainEntity> trainEntitiesList = trainDao.findAll();
+        List<TrainVO> trainVOList = new ArrayList<>();
+        for(TrainEntity train: trainEntitiesList){
+//            for each train get the route by routeID
+            Long routeID = train.getRouteId();
+            RouteEntity routeEntity = routeDao.findById(routeID).get();
+//            find startStation and endStation in the route
+            int start = routeEntity.getStationIds().indexOf(startStationId);
+            int end = routeEntity.getStationIds().indexOf(startStationId);
+            if(start!=-1 && end!=-1 && start <= end){
+//                success find station && start before end
+                if(Objects.equals(train.getDate(), date)){
+//                    success find date
+                    trainVOList.add(TrainMapper.INSTANCE.toTrainVO(train));
+                }
+            }
+        }
+        return trainVOList;
     }
 
     @Override

@@ -97,6 +97,35 @@ public class TrainServiceImpl implements TrainService {
     public void changeTrain(Long id, String name, Long routeId, TrainType type, String date, List<Date> arrivalTimes,
                             List<Date> departureTimes) {
         // TODO: edit train info, please refer to `addTrain` above
+//        6/30
+//        select the train by id and delete 这个方法如果更改消息出错，会把原来火车信息删除，可能有点问题
+//        trainDao.delete(trainDao.getReferenceById(id));
+//        addTrain(name, routeId, type, date, arrivalTimes, departureTimes);
+
+//        这个方法看上去正确一点
+        TrainEntity entity=trainDao.findById(id).get();
+        RouteEntity route=routeDao.findById(routeId).get();
+        if (route.getStationIds().size() != entity.getArrivalTimes().size()
+                || route.getStationIds().size() != entity.getDepartureTimes().size()) {
+            throw new BizException(CommonErrorType.ILLEGAL_ARGUMENTS, "列表长度错误");
+        }
+        entity.setName(name);
+        entity.setRouteId(routeId);
+        entity.setTrainType(type);
+        entity.setDate(date);
+        entity.setArrivalTimes(arrivalTimes);
+        entity.setDepartureTimes(departureTimes);
+
+        entity.setExtraInfos(new ArrayList<String>(Collections.nCopies(route.getStationIds().size(), "预计正点")));
+        switch (type) {
+            case HIGH_SPEED:
+                entity.setSeats(GSeriesSeatStrategy.INSTANCE.initSeatMap(route.getStationIds().size()));
+                break;
+            case NORMAL_SPEED:
+                entity.setSeats(KSeriesSeatStrategy.INSTANCE.initSeatMap(route.getStationIds().size()));
+                break;
+        }
+        trainDao.save(entity);
     }
 
     @Override
